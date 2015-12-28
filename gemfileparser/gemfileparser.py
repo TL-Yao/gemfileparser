@@ -54,7 +54,7 @@ class GemfileParser(object):
         r"(?P<requirement>([>|<|=|~>|\d]+[ ]*[0-9\.\w]+[ ,]*)+)")
     global_group = 'runtime'
     group_block_regex = re.compile(
-        r"group[ ]?:[ ]?(?P<groupblock>.*?) do")
+        r"group[ ]?:[ ]?(?P<groupblock>.*?)(,.*)* do")
     add_dvtdep_regex = re.compile(
         r".*add_development_dependency (?P<line>.*)")
     add_rundep_regex = re.compile(
@@ -64,12 +64,7 @@ class GemfileParser(object):
         self.filepath = filepath    # Required when calls to gemspec occurs
         self.gemfile = open(filepath)
         self.appname = appname
-        self.dependencies = {
-            'development': [],
-            'runtime': [],
-            'test': [],
-            'production': []
-        }
+        self.dependencies = {}
         self.contents = self.gemfile.readlines()
         if filepath.endswith('gemspec'):
             self.gemspec = True
@@ -124,10 +119,9 @@ class GemfileParser(object):
                         else:
                             setattr(dep, criteria, match.group(criteria))
                         break
-            if dep.group in self.dependencies:
-                self.dependencies[dep.group].append(dep)
-            else:
-                self.dependencies[dep.group] = [dep]
+            if dep.group not in self.dependencies:
+                self.dependencies[dep.group] = {}
+            self.dependencies[dep.group][dep.name] = dep
 
     def parse_gemfile(self, path=''):
         '''Parses a Gemfile and returns a dict of categorized dependencies.'''
